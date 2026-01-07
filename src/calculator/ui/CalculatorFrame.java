@@ -2,8 +2,6 @@ package calculator.ui;
 
 import calculator.engine.*;
 import calculator.model.HistoryEntry;
-import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatLightLaf;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -16,17 +14,18 @@ import java.util.List;
 /**
  * Main calculator UI frame.
  * Built with FlatLaf for modern, minimalist design.
- * Implements keyboard shortcuts and history buffer.
+ * Features a fixed dark theme with clean, borderless components.
  * 
  * FILE TYPE: JFrame (Swing GUI Component)
  * PURPOSE: User interface for scientific calculator
  * 
  * FEATURES:
- * - FlatLaf Dark/Light theme toggle
+ * - Fixed FlatLaf Dark theme (no theme switching)
+ * - Clean, minimalist, borderless design
+ * - Subtle rounded components
+ * - Neutral dark palette with accent colors on operators
  * - Monospaced display font
- * - Keyboard shortcuts (Enter, Backspace, Ctrl+L, Up arrow)
- * - History buffer (max 100 entries)
- * - Comma-formatted display
+ * - History buffer with Clear History button
  * - DEG/RAD angle mode toggle
  */
 public class CalculatorFrame extends JFrame {
@@ -37,8 +36,7 @@ public class CalculatorFrame extends JFrame {
     private JLabel angleModeLabel;
     private JList<String> historyList;
     private DefaultListModel<String> historyModel;
-    @SuppressWarnings("unused")
-	private JButton themeToggleButton;
+    private JButton clearHistoryButton;
     
     // ========== CALCULATOR ENGINE ==========
     private final MathContext context;
@@ -54,8 +52,12 @@ public class CalculatorFrame extends JFrame {
     
     // ========== CURRENT STATE ==========
     private StringBuilder currentExpression;
-    private int historyIndex = -1;
-    private boolean isDarkTheme = true;
+    
+    // ========== COLOR SCHEME ==========
+    private static final Color ACCENT_COLOR = new Color(64, 158, 255); // Blue accent
+    private static final Color OPERATOR_BG = new Color(70, 73, 75);
+    private static final Color EQUALS_BG = new Color(64, 158, 255);
+    private static final Color EQUALS_FG = Color.WHITE;
     
     /**
      * Constructs the calculator frame with all components.
@@ -64,7 +66,6 @@ public class CalculatorFrame extends JFrame {
      * 1. Engine components
      * 2. History buffer
      * 3. UI setup
-     * 4. Event handlers
      */
     public CalculatorFrame() {
         // Initialize engine components
@@ -87,7 +88,6 @@ public class CalculatorFrame extends JFrame {
         setupDisplay();
         setupButtons();
         setupHistory();
-        setupKeyboardShortcuts();
         
         pack();
         setLocationRelativeTo(null); // Center on screen
@@ -99,6 +99,7 @@ public class CalculatorFrame extends JFrame {
     private void setupFrame() {
         setTitle("Scientific Calculator");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setResizable(false);
         
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
@@ -107,6 +108,7 @@ public class CalculatorFrame extends JFrame {
     
     /**
      * Sets up the display panel (expression field + angle mode indicator).
+     * Clean, borderless design with subtle shadows.
      */
     private void setupDisplay() {
         JPanel displayPanel = new JPanel(new BorderLayout(5, 5));
@@ -119,14 +121,19 @@ public class CalculatorFrame extends JFrame {
         displayField.setFocusable(false);
         displayField.setPreferredSize(new Dimension(500, 60));
         displayField.setText("0");
+        displayField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(60, 63, 65), 1),
+            new EmptyBorder(10, 15, 10, 15)
+        ));
         
-        // Angle mode indicator
+        // Angle mode indicator - clean, minimal design
         angleModeLabel = new JLabel(context.getAngleMode());
         angleModeLabel.setFont(new Font("Dialog", Font.BOLD, 14));
         angleModeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        angleModeLabel.setForeground(ACCENT_COLOR);
         angleModeLabel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Color.GRAY, 1),
-            new EmptyBorder(5, 10, 5, 10)
+            BorderFactory.createLineBorder(new Color(60, 63, 65), 1),
+            new EmptyBorder(5, 15, 5, 15)
         ));
         
         displayPanel.add(displayField, BorderLayout.CENTER);
@@ -138,6 +145,7 @@ public class CalculatorFrame extends JFrame {
     /**
      * Sets up the button grid using GridBagLayout.
      * Creates a 6x7 grid of calculator buttons.
+     * Applies accent colors to operators and equals button.
      */
     private void setupButtons() {
         JPanel buttonPanel = new JPanel(new GridBagLayout());
@@ -153,16 +161,16 @@ public class CalculatorFrame extends JFrame {
             {"ln", "log", "exp", "√", "x²", "xⁿ", "|x|"},
             {"π", "e", "(", ")", "C", "⌫", "÷"},
             {"7", "8", "9", "%", "1/x", "±", "×"},
-            {"4", "5", "6", "+", "-", "Theme", " "},
-            {"1", "2", "3", ".", "0", "=", " "}
+            {"4", "5", "6", "+", "-", "(", ")"},
+            {"1", "2", "3", ".", "0", "=", "="}
         };
         
         for (int row = 0; row < buttonLabels.length; row++) {
             for (int col = 0; col < buttonLabels[row].length; col++) {
                 String label = buttonLabels[row][col];
                 
-                if (label.equals(" ")) {
-                    // Empty space
+                // Skip duplicate equals button space
+                if (label.equals("=") && col > 5) {
                     continue;
                 }
                 
@@ -172,8 +180,8 @@ public class CalculatorFrame extends JFrame {
                 gbc.gridy = row;
                 gbc.gridwidth = 1;
                 
-                // Make equals button span 2 columns if in last row
-                if (label.equals("=") && row == buttonLabels.length - 1) {
+                // Make equals button span 2 columns
+                if (label.equals("=")) {
                     gbc.gridwidth = 2;
                 }
                 
@@ -186,27 +194,64 @@ public class CalculatorFrame extends JFrame {
     
     /**
      * Creates a styled button with action handler.
+     * Applies modern, minimalist styling with subtle rounded corners.
+     * Operators and equals button receive accent colors.
      */
     private JButton createButton(String label) {
         JButton button = new JButton(label);
         button.setFont(new Font("Dialog", Font.BOLD, 14));
         button.setPreferredSize(new Dimension(70, 50));
         button.setFocusPainted(false);
+        button.setBorderPainted(false);
         
-        // Special styling for equals button
+        // Apply accent colors to specific buttons
         if (label.equals("=")) {
+            // Equals button: prominent accent
             button.setFont(new Font("Dialog", Font.BOLD, 18));
+            button.setBackground(EQUALS_BG);
+            button.setForeground(EQUALS_FG);
+        } else if (isOperatorButton(label)) {
+            // Operators: subtle accent background
+            button.setBackground(OPERATOR_BG);
         }
         
-        // Store reference to theme button
-        if (label.equals("Theme")) {
-            themeToggleButton = button;
-        }
+        // Add hover effect for better UX
+        button.addMouseListener(new MouseAdapter() {
+            Color originalBg = button.getBackground();
+            
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if (label.equals("=")) {
+                    button.setBackground(EQUALS_BG.brighter());
+                } else if (isOperatorButton(label)) {
+                    button.setBackground(OPERATOR_BG.brighter());
+                }
+            }
+            
+            @Override
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(originalBg);
+            }
+        });
         
         // Add action listener
         button.addActionListener(e -> handleButtonClick(label));
         
         return button;
+    }
+    
+    /**
+     * Determines if a button label represents an operator.
+     * Used for applying accent colors.
+     */
+    private boolean isOperatorButton(String label) {
+        return label.matches("[+\\-×÷%^]") || 
+               label.equals("xⁿ") || 
+               label.equals("x²") ||
+               label.equals("1/x") ||
+               label.equals("±") ||
+               label.equals("|x|") ||
+               label.equals("√");
     }
     
     /**
@@ -225,9 +270,6 @@ public class CalculatorFrame extends JFrame {
                 break;
             case "DEG/RAD":
                 toggleAngleMode();
-                break;
-            case "Theme":
-                toggleTheme();
                 break;
             case "sin":
             case "cos":
@@ -323,7 +365,6 @@ public class CalculatorFrame extends JFrame {
     
     /**
      * Updates the display field with current expression.
-     * Applies comma formatting for better readability.
      */
     private void updateDisplay() {
         String expr = currentExpression.toString();
@@ -358,23 +399,6 @@ public class CalculatorFrame extends JFrame {
     private void toggleAngleMode() {
         context.toggleAngleMode();
         angleModeLabel.setText(context.getAngleMode());
-    }
-    
-    /**
-     * Toggles between Dark and Light theme.
-     */
-    private void toggleTheme() {
-        try {
-            if (isDarkTheme) {
-                FlatLightLaf.setup();
-            } else {
-                FlatDarkLaf.setup();
-            }
-            SwingUtilities.updateComponentTreeUI(this);
-            isDarkTheme = !isDarkTheme;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
     
     /**
@@ -438,15 +462,26 @@ public class CalculatorFrame extends JFrame {
     }
     
     /**
-     * Sets up the history panel.
+     * Sets up the history panel with Clear History button.
+     * Button is disabled when history is empty.
      */
     private void setupHistory() {
-        JPanel historyPanel = new JPanel(new BorderLayout());
-        historyPanel.setBorder(BorderFactory.createTitledBorder("History"));
-        historyPanel.setPreferredSize(new Dimension(200, 0));
+        JPanel historyPanel = new JPanel(new BorderLayout(5, 5));
+        historyPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(60, 63, 65), 1),
+            new EmptyBorder(10, 10, 10, 10)
+        ));
+        historyPanel.setPreferredSize(new Dimension(220, 0));
         
+        // History title label
+        JLabel historyLabel = new JLabel("History");
+        historyLabel.setFont(new Font("Dialog", Font.BOLD, 14));
+        historyLabel.setBorder(new EmptyBorder(0, 0, 5, 0));
+        
+        // History list
         historyList = new JList<>(historyModel);
-        historyList.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        historyList.setFont(new Font("Monospaced", Font.PLAIN, 11));
+        historyList.setBorder(new EmptyBorder(5, 5, 5, 5));
         
         // Double-click to reuse expression
         historyList.addMouseListener(new MouseAdapter() {
@@ -464,7 +499,22 @@ public class CalculatorFrame extends JFrame {
         });
         
         JScrollPane scrollPane = new JScrollPane(historyList);
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(60, 63, 65), 1));
+        
+        // Clear History button - disabled when empty
+        clearHistoryButton = new JButton("Clear History");
+        clearHistoryButton.setFont(new Font("Dialog", Font.BOLD, 12));
+        clearHistoryButton.setEnabled(false); // Initially disabled
+        clearHistoryButton.setFocusPainted(false);
+        clearHistoryButton.addActionListener(e -> clearHistory());
+        
+        // Layout
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(historyLabel, BorderLayout.NORTH);
+        
+        historyPanel.add(topPanel, BorderLayout.NORTH);
         historyPanel.add(scrollPane, BorderLayout.CENTER);
+        historyPanel.add(clearHistoryButton, BorderLayout.SOUTH);
         
         getContentPane().add(historyPanel, BorderLayout.EAST);
     }
@@ -472,6 +522,7 @@ public class CalculatorFrame extends JFrame {
     /**
      * Adds a calculation to the history buffer.
      * Maintains max size of 100 entries.
+     * Enables Clear History button when history is not empty.
      */
     private void addToHistory(String expression, String result) {
         HistoryEntry entry = new HistoryEntry(expression, result);
@@ -483,62 +534,30 @@ public class CalculatorFrame extends JFrame {
             history.remove(history.size() - 1);
             historyModel.remove(historyModel.size() - 1);
         }
+        
+        // Enable Clear History button
+        clearHistoryButton.setEnabled(true);
     }
     
     /**
-     * Sets up keyboard shortcuts.
-     * 
-     * SHORTCUTS:
-     * - Enter: Evaluate expression
-     * - Backspace: Delete last character
-     * - Ctrl+L: Clear display
-     * - Up arrow: Previous history entry
+     * Clears all history entries and disables the Clear History button.
      */
-    private void setupKeyboardShortcuts() {
-        // Get input map for the content pane
-        JComponent contentPane = (JComponent) getContentPane();
-        InputMap inputMap = contentPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        ActionMap actionMap = contentPane.getActionMap();
-        
-        // Enter key: evaluate
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "evaluate");
-        actionMap.put("evaluate", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                evaluateExpression();
+    private void clearHistory() {
+        if (!history.isEmpty()) {
+            // Show confirmation dialog
+            int result = JOptionPane.showConfirmDialog(
+                this,
+                "Are you sure you want to clear all history?",
+                "Clear History",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+            );
+            
+            if (result == JOptionPane.YES_OPTION) {
+                history.clear();
+                historyModel.clear();
+                clearHistoryButton.setEnabled(false);
             }
-        });
-        
-        // Backspace: delete
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), "backspace");
-        actionMap.put("backspace", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                backspace();
-            }
-        });
-        
-        // Ctrl+L: clear
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK), "clear");
-        actionMap.put("clear", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                clearDisplay();
-            }
-        });
-        
-        // Up arrow: previous history
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "historyUp");
-        actionMap.put("historyUp", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!history.isEmpty()) {
-                    historyIndex = (historyIndex + 1) % history.size();
-                    HistoryEntry entry = history.get(historyIndex);
-                    currentExpression = new StringBuilder(entry.getExpression());
-                    updateDisplay();
-                }
-            }
-        });
+        }
     }
 }

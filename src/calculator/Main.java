@@ -6,7 +6,7 @@ import javax.swing.SwingUtilities;
 
 /**
  * Main entry point for the Scientific Calculator application.
- * Initializes FlatLaf theme and launches the UI.
+ * Initializes FlatLaf Dark theme (FIXED - no theme switching).
  * 
  * INSTRUCTIONS:
  * - This is a regular Java Class with main method
@@ -14,9 +14,10 @@ import javax.swing.SwingUtilities;
  */
 public class Main {
     public static void main(String[] args) {
-        // Set FlatLaf Dark theme before creating UI
+        // Set FlatLaf Dark theme - FIXED THEME (no switching)
         try {
             FlatDarkLaf.setup();
+            System.out.println("FlatLaf Dark theme loaded successfully!");
         } catch (Exception e) {
             System.err.println("Failed to initialize FlatLaf theme");
             e.printStackTrace();
