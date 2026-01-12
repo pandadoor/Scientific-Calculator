@@ -11,52 +11,35 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Main calculator UI frame.
- * Built with FlatLaf for modern, minimalist design.
- * Features a fixed dark theme with clean, borderless components.
- * 
- * FILE TYPE: JFrame (Swing GUI Component)
- * PURPOSE: User interface for scientific calculator
- * 
- * FEATURES:
- * - Fixed FlatLaf Dark theme (no theme switching)
- * - Clean, minimalist, borderless design
- * - Subtle rounded components
- * - Neutral dark palette with accent colors on operators
- * - Monospaced display font
- * - History buffer with Clear History button
- * - DEG/RAD angle mode toggle
- */
 public class CalculatorFrame extends JFrame {
     private static final long serialVersionUID = 1L;
     
-    // ========== UI COMPONENTS ==========
+    // UI COMPONENTS 
     private JTextField displayField;
     private JLabel angleModeLabel;
     private JList<String> historyList;
     private DefaultListModel<String> historyModel;
     private JButton clearHistoryButton;
     
-    // ========== CALCULATOR ENGINE ==========
+    //  CALCULATOR ENGINE 
     private final MathContext context;
     private final ShuntingYardParser parser;
     private final RPNEvaluator evaluator;
     
-    // ========== HISTORY BUFFER ==========
+    // HISTORY BUFFER 
     private final List<HistoryEntry> history;
     private static final int MAX_HISTORY = 100;
     
-    // ========== NUMBER FORMATTING ==========
+    // NUMBER FORMATTING
     private final DecimalFormat formatter;
     
-    // ========== CURRENT STATE ==========
+    // CURRENT STATE
     private StringBuilder currentExpression;
     
-    // ========== COLOR SCHEME ==========
-    private static final Color ACCENT_COLOR = new Color(64, 158, 255); // Blue accent
-    private static final Color OPERATOR_BG = new Color(70, 73, 75);
-    private static final Color EQUALS_BG = new Color(64, 158, 255);
+    
+    // COLOR SCHEME
+    private static final Color OPERATOR_BG = new Color(34, 34, 34);
+    private static final Color EQUALS_BG = new Color(34, 34, 34);
     private static final Color EQUALS_FG = Color.WHITE;
     
     /**
@@ -68,6 +51,7 @@ public class CalculatorFrame extends JFrame {
      * 3. UI setup
      */
     public CalculatorFrame() {
+    	setBackground(new Color(255, 255, 255));
         // Initialize engine components
         context = new MathContext();
         parser = new ShuntingYardParser(context);
@@ -102,6 +86,8 @@ public class CalculatorFrame extends JFrame {
         setResizable(false);
         
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBackground(new Color(102, 102, 102));
+        mainPanel.setForeground(Color.BLACK);
         mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
         setContentPane(mainPanel);
     }
@@ -112,27 +98,31 @@ public class CalculatorFrame extends JFrame {
      */
     private void setupDisplay() {
         JPanel displayPanel = new JPanel(new BorderLayout(5, 5));
+        displayPanel.setBackground(new Color(51, 51, 51));
         
         // Expression display (monospaced font for clarity)
         displayField = new JTextField();
-        displayField.setFont(new Font("Monospaced", Font.PLAIN, 24));
+        displayField.setForeground(new Color(255, 255, 255));
+        displayField.setBackground(new Color(51, 51, 51));
+        displayField.setFont(new Font("Monospaced", Font.BOLD, 24));
         displayField.setHorizontalAlignment(JTextField.RIGHT);
         displayField.setEditable(false);
         displayField.setFocusable(false);
         displayField.setPreferredSize(new Dimension(500, 60));
         displayField.setText("0");
         displayField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(60, 63, 65), 1),
+            BorderFactory.createLineBorder(new Color(0, 0, 0), 1),
             new EmptyBorder(10, 15, 10, 15)
         ));
         
         // Angle mode indicator - clean, minimal design
         angleModeLabel = new JLabel(context.getAngleMode());
+        angleModeLabel.setBackground(new Color(51, 51, 51));
         angleModeLabel.setFont(new Font("Dialog", Font.BOLD, 14));
         angleModeLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        angleModeLabel.setForeground(ACCENT_COLOR);
+        angleModeLabel.setForeground(new Color(153, 204, 51));
         angleModeLabel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(60, 63, 65), 1),
+            BorderFactory.createLineBorder(new Color(0, 0, 0), 1),
             new EmptyBorder(5, 15, 5, 15)
         ));
         
@@ -149,6 +139,8 @@ public class CalculatorFrame extends JFrame {
      */
     private void setupButtons() {
         JPanel buttonPanel = new JPanel(new GridBagLayout());
+        buttonPanel.setForeground(new Color(255, 255, 255));
+        buttonPanel.setBackground(new Color(102, 102, 102));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(3, 3, 3, 3);
@@ -157,7 +149,7 @@ public class CalculatorFrame extends JFrame {
         
         // Button layout (6 rows x 7 columns)
         String[][] buttonLabels = {
-            {"sin", "cos", "tan", "asin", "acos", "atan", "DEG/RAD"},
+            {"sin", "cos", "tan", "asin", "acos", "atan", "D/R"},
             {"ln", "log", "exp", "√", "x²", "xⁿ", "|x|"},
             {"π", "e", "(", ")", "C", "⌫", "÷"},
             {"7", "8", "9", "%", "1/x", "±", "×"},
@@ -268,7 +260,7 @@ public class CalculatorFrame extends JFrame {
             case "⌫":
                 backspace();
                 break;
-            case "DEG/RAD":
+            case "D/R":
                 toggleAngleMode();
                 break;
             case "sin":
@@ -410,8 +402,14 @@ public class CalculatorFrame extends JFrame {
         try {
             String expression = currentExpression.toString();
             
-            if (expression.isEmpty() || expression.equals("0")) {
-                return;
+            /*
+             *expression.matches("\\d+(\\.\\d+)?") → checks if the string is only a number (integer or decimal).
+				 \\d+ → one or more digits.
+  				 (\\.\\d+)? → optional decimal part. 
+             */
+            
+            if (expression.isEmpty() || expression.equals("0") || expression.matches("\\d+(\\.\\d+)?")) { 
+            	return; 
             }
             
             // PIPELINE STEP 1: Tokenize
@@ -467,20 +465,26 @@ public class CalculatorFrame extends JFrame {
      */
     private void setupHistory() {
         JPanel historyPanel = new JPanel(new BorderLayout(5, 5));
+        historyPanel.setForeground(new Color(255, 255, 255));
+        historyPanel.setBackground(new Color(51, 51, 51));
         historyPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(60, 63, 65), 1),
+            BorderFactory.createLineBorder(new Color(0, 0, 0), 1),
             new EmptyBorder(10, 10, 10, 10)
         ));
         historyPanel.setPreferredSize(new Dimension(220, 0));
         
         // History title label
         JLabel historyLabel = new JLabel("History");
+        historyLabel.setForeground(new Color(255, 255, 255));
+        historyLabel.setBackground(new Color(51, 51, 51));
         historyLabel.setFont(new Font("Dialog", Font.BOLD, 14));
         historyLabel.setBorder(new EmptyBorder(0, 0, 5, 0));
         
         // History list
         historyList = new JList<>(historyModel);
-        historyList.setFont(new Font("Monospaced", Font.PLAIN, 11));
+        historyList.setForeground(new Color(255, 255, 255));
+        historyList.setBackground(new Color(51, 51, 51));
+        historyList.setFont(new Font("Monospaced", Font.BOLD, 11));
         historyList.setBorder(new EmptyBorder(5, 5, 5, 5));
         
         // Double-click to reuse expression
@@ -499,10 +503,12 @@ public class CalculatorFrame extends JFrame {
         });
         
         JScrollPane scrollPane = new JScrollPane(historyList);
-        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(60, 63, 65), 1));
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(0, 0, 0), 1));
         
         // Clear History button - disabled when empty
         clearHistoryButton = new JButton("Clear History");
+        clearHistoryButton.setForeground(new Color(153, 204, 51));
+        clearHistoryButton.setBackground(new Color(51, 51, 51));
         clearHistoryButton.setFont(new Font("Dialog", Font.BOLD, 12));
         clearHistoryButton.setEnabled(false); // Initially disabled
         clearHistoryButton.setFocusPainted(false);
@@ -510,6 +516,8 @@ public class CalculatorFrame extends JFrame {
         
         // Layout
         JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setForeground(new Color(255, 255, 255));
+        topPanel.setBackground(new Color(51, 51, 51));
         topPanel.add(historyLabel, BorderLayout.NORTH);
         
         historyPanel.add(topPanel, BorderLayout.NORTH);
@@ -539,9 +547,7 @@ public class CalculatorFrame extends JFrame {
         clearHistoryButton.setEnabled(true);
     }
     
-    /**
-     * Clears all history entries and disables the Clear History button.
-     */
+    //Clears all history entries and disables the Clear History button.
     private void clearHistory() {
         if (!history.isEmpty()) {
             // Show confirmation dialog

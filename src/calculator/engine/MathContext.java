@@ -1,5 +1,4 @@
 package calculator.engine;
-
 import calculator.model.Operator;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +24,7 @@ public class MathContext {
     }
     
     /**
-     * Initializes operator precedence and associativity rules.
+     * initializes operator precedence and associativity rules.
      * 
      * PRECEDENCE LEVELS:
      * 1 (lowest)  - Addition, Subtraction
@@ -59,16 +58,11 @@ public class MathContext {
         this.isDegreeMode = degreeMode;
     }
     
-    /**
-     * Toggles between DEG and RAD mode.
-     */
     public void toggleAngleMode() {
         isDegreeMode = !isDegreeMode;
     }
     
-    /**
-     * Returns current angle mode as string for display.
-     */
+    // Returns current angle mode as string for display.
     public String getAngleMode() {
         return isDegreeMode ? "DEG" : "RAD";
     }
