@@ -403,12 +403,10 @@ public class CalculatorFrame extends JFrame {
             String expression = currentExpression.toString();
             
             /*
-             *expression.matches("\\d+(\\.\\d+)?") → checks if the string is only a number (integer or decimal).
-				 \\d+ → one or more digits.
-  				 (\\.\\d+)? → optional decimal part. 
+             * "^-?\\d+(\\.\\d+)?$" regex a single number only (positive/negative, integer/decimal)
              */
             
-            if (expression.isEmpty() || expression.equals("0") || expression.matches("\\d+(\\.\\d+)?")) { 
+            if (expression.isEmpty() || expression.equals("0") || expression.trim().matches("^-?\\d+(\\.\\d+)?$")) { 
             	return; 
             }
             
