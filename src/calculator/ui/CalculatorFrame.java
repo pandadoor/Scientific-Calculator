@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CalculatorFrame extends JFrame {
+	//Versioning because of jframe
     private static final long serialVersionUID = 1L;
     
     // UI COMPONENTS 
@@ -33,7 +34,7 @@ public class CalculatorFrame extends JFrame {
     // NUMBER FORMATTING
     private final DecimalFormat formatter;
     
-    // CURRENT STATE
+    // CURRENT STATE (typing) 
     private StringBuilder currentExpression;
     
     
@@ -80,7 +81,7 @@ public class CalculatorFrame extends JFrame {
      * Sets up the main frame properties.
      */
     private void setupFrame() {
-        setTitle("Scientific Calculator");
+        setTitle("G4 | Scientific Calculator");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
         
@@ -377,7 +378,7 @@ public class CalculatorFrame extends JFrame {
      * Removes last character from expression.
      */
     private void backspace() {
-        if (currentExpression.length() > 0) {
+        if (currentExpression.length() > 0 )  {
             currentExpression.deleteCharAt(currentExpression.length() - 1);
             updateDisplay();
         }
@@ -420,12 +421,12 @@ public class CalculatorFrame extends JFrame {
             // PIPELINE STEP 4: Format and display
             String formattedResult = formatResult(result);
             displayField.setText(formattedResult);
+
+            // Update the Memory 
+            String cleanResult = formattedResult.replace(",", "");
+            currentExpression = new StringBuilder(cleanResult);
             
-            // Add to history
             addToHistory(expression, formattedResult);
-            
-            // Set result as new expression for chaining
-            currentExpression = new StringBuilder(String.valueOf(result));
             
         } catch (ArithmeticException e) {
             displayField.setText("Math Error");
