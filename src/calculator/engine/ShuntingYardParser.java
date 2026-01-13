@@ -8,8 +8,6 @@ import java.util.*;
  * Converts infix notation to postfix (RPN) notation.
  * Handles operator precedence, associativity, and functions.
  * 
- * PURPOSE: Parse infix expressions into postfix for easy evaluation
- * 
  * ALGORITHM FLOW:
  * Infix: "3 + 4 * 2" → Postfix: "3 4 2 * +"
  */

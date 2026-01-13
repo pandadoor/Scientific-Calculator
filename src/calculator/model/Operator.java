@@ -3,8 +3,6 @@ package calculator.model;
 /**
  * Represents an operator with its precedence and associativity.
  * Used by the Shunting Yard algorithm to correctly parse expressions.
- * 
- * PURPOSE: Data model for operator properties
  */
 public class Operator {
     private final int precedence;

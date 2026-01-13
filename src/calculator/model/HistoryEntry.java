@@ -6,9 +6,6 @@ import java.io.Serializable;
  * Represents a single calculation in the history buffer.
  * Stores both the expression and its result for later retrieval.
  * 
- * FILE TYPE: Regular Java Class (POJO)
- * PURPOSE: Data model for history entries
- * 
  * Implements Serializable for potential future persistence to file.
  */
 public class HistoryEntry implements Serializable {

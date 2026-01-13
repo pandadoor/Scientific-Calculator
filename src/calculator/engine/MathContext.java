@@ -6,9 +6,6 @@ import java.util.Map;
 /**
  * Stores global calculator state and configuration.
  * Manages angle mode (DEG/RAD) and operator definitions.
- * 
- * FILE TYPE: Regular Java Class (Configuration/Context holder)
- * PURPOSE: Central configuration for calculator engine
  */
 public class MathContext {
     private boolean isDegreeMode = true; // Default to degrees

@@ -9,8 +9,7 @@ import java.util.regex.Pattern;
  * Tokenizes mathematical expressions into discrete tokens.
  * Handles implicit multiplication (2π, 2(3+4), sin30).
  * Sanitizes input by removing commas and normalizing whitespace.
- * 
- * PURPOSE: Convert string input into parseable tokens
+
  * PIPELINE: User Input → sanitize() → tokenize() → Parser
  */
 public class Tokenizer {
@@ -20,9 +19,6 @@ public class Tokenizer {
     private static final Pattern CONSTANT_PATTERN = Pattern.compile("π|e");
     
     /**
-     * Sanitizes input by removing commas and extra whitespace.
-     * CRITICAL: This prevents "1,235" from being treated as text.
-     * 
      * @param input Raw user input
      * @return Cleaned input string
      * 

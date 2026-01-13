@@ -9,9 +9,6 @@ import java.util.List;
  * Uses a stack-based algorithm for efficient evaluation.
  * Handles all mathematical operations using java.lang.Math ONLY.
  * 
- * FILE TYPE: Regular Java Class (Engine component)
- * PURPOSE: Evaluate postfix expressions to get final result
- * 
  * ALGORITHM:
  * 1. Scan tokens left to right
  * 2. Push numbers onto stack
@@ -90,8 +87,6 @@ public class RPNEvaluator {
     
     /**
      * Applies a binary operator to two operands.
-     * 
-     * USES java.lang.Math ONLY - NO CUSTOM IMPLEMENTATIONS
      */
     private double applyOperator(String operator, double left, double right) {
         switch (operator) {
@@ -118,8 +113,6 @@ public class RPNEvaluator {
      * ANGLE MODE HANDLING:
      * - For trig functions (sin, cos, tan): convert input to radians if in DEG mode
      * - For inverse trig (asin, acos, atan): convert output to degrees if in DEG mode
-     * 
-     * USES java.lang.Math ONLY - NO CUSTOM IMPLEMENTATIONS
      */
     private double applyFunction(String function, double operand) {
         switch (function) {
