@@ -41,8 +41,7 @@ public class Tokenizer {
      * 
      * EXAMPLES:
      * "2π" → ["2", "*", "π"]
-     * "sin30" → ["sin", "*", "30"]  // Wrong! Should be ["sin", "(", "30", ")"]
-     * Actually: "sin30" → ["sin", "30"] (function takes argument)
+     * "sin30" → ["sin", "30"] (function takes argument)
      */
     public static List<String> tokenize(String expression) {
         expression = sanitize(expression);

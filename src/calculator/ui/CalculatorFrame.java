@@ -15,7 +15,7 @@ public class CalculatorFrame extends JFrame {
 	//Versioning because of jframe
     private static final long serialVersionUID = 1L;
     
-    // UI COMPONENTS 
+    // instance variables (fields): UI COMPONENTS 
     private JTextField displayField;
     private JLabel angleModeLabel;
     private JList<String> historyList;
