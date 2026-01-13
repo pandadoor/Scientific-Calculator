@@ -8,7 +8,6 @@ import java.util.*;
  * Converts infix notation to postfix (RPN) notation.
  * Handles operator precedence, associativity, and functions.
  * 
- * FILE TYPE: Regular Java Class (Engine component)
  * PURPOSE: Parse infix expressions into postfix for easy evaluation
  * 
  * ALGORITHM FLOW:
