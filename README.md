@@ -310,41 +310,672 @@ src/
 
 ## Technical Justification
 
-### Industry Standard Approach
+---
 
-The Shunting Yard algorithm is the **de facto standard** for expression parsing:
+### SLIDE 2: System Architecture Overview (1 minute)
 
-- **Used in**: Compilers (GCC, Clang), interpreters (Python, Ruby), database query parsers (PostgreSQL)
-- **Taught in**: Computer science curriculum (data structures, compiler design)
-- **Documented in**: Knuth's "The Art of Computer Programming"
+**"The calculator follows a three-layer architecture."**
 
-### Academic Correctness
+**[SHOW ARCHITECTURE DIAGRAM]**
 
-The implementation adheres to formal parsing theory:
+```
+┌─────────────────────────────────────────┐
+│           UI LAYER (Swing)              │
+│         CalculatorFrame.java            │
+└─────────────────┬───────────────────────┘
+                  │
+┌─────────────────▼───────────────────────┐
+│         ENGINE LAYER (Algorithms)       │
+│  ┌──────────────────────────────────┐   │
+│  │ Tokenizer.java                   │   │
+│  │ ShuntingYardParser.java          │   │
+│  │ RPNEvaluator.java                │   │
+│  │ MathContext.java                 │   │
+│  └──────────────────────────────────┘   │
+└─────────────────┬───────────────────────┘
+                  │
+┌─────────────────▼───────────────────────┐
+│         MODEL LAYER (Data)              │
+│  Operator.java, HistoryEntry.java      │
+└─────────────────────────────────────────┘
+```
 
-1. **Context-Free Grammar**: Expression grammar is properly defined
-2. **Deterministic Parsing**: No backtracking required
-3. **Formal Semantics**: Operator precedence and associativity are explicitly encoded
-4. **Error Recovery**: Syntax errors are detected during parsing, not evaluation
+**"This separation ensures maintainability—UI changes don't affect algorithms, and algorithms can be tested independently."**
 
-### Scalability
+---
 
-The architecture supports extensions without core modifications:
+### SLIDE 3: Pipeline Flow (1.5 minutes)
 
-- **New operators**: Add to `MathContext` operator map
-- **New functions**: Add cases to `RPNEvaluator.applyFunction()`
-- **New constants**: Add to `Tokenizer` and `RPNEvaluator`
-- **New features**: Extend pipeline without affecting existing stages
+**"Let me walk you through what happens when you type '2 + 3 * 4' and press equals."**
 
-### Maintainability
+**[SHOW PIPELINE DIAGRAM - see flowchart below]**
 
-Code organization follows best practices:
+**Step-by-step explanation:**
 
-- **Single Responsibility**: Each class has one clear purpose
-- **Immutability**: `Operator` and `HistoryEntry` are immutable
-- **Documentation**: Every method includes purpose, parameters, and complexity
-- **Error Messages**: Specific error types (Math Error, Syntax Error, Domain Error)
+1. **User Input**: `2 + 3 * 4`
+2. **Sanitizer** (Tokenizer.java): Removes commas if present
+3. **Tokenizer** (Tokenizer.java): Breaks into tokens: `["2", "+", "3", "*", "4"]`
+4. **Shunting Yard** (ShuntingYardParser.java): Converts to postfix: `["2", "3", "4", "*", "+"]`
+    - **Why?** Respects operator precedence automatically
+5. **Stack Evaluator** (RPNEvaluator.java): Computes result using a stack
+    - Push 2, push 3, push 4
+    - Pop 4,3 → compute 3*4=12 → push 12
+    - Pop 12,2 → compute 2+12=14 → push 14
+6. **Formatter**: Adds commas: `14`
+7. **History**: Stores `"2 + 3 * 4 = 14"`
+8. **Display**: Shows result
 
+**"The entire process is O(n) linear time—incredibly efficient."**
+
+---
+
+### SLIDE 4: Why Shunting Yard Algorithm? (1 minute)
+
+**"Why did we choose Shunting Yard over alternatives?"**
+
+**[SHOW COMPARISON TABLE]**
+
+|Algorithm|Problem|
+|---|---|
+|**Shunting Yard**|✅ **SELECTED** - O(n), handles precedence naturally|
+|Recursive Descent|❌ Complex grammar, harder to maintain|
+|Regex-only|❌ Cannot handle nested parentheses|
+|eval()|❌ Security risk, platform-dependent|
+
+**"Shunting Yard is the industry standard—used in compilers like GCC, interpreters like Python, and database parsers like PostgreSQL."**
+
+---
+
+### SLIDE 5: Why Stack Data Structure? (1 minute)
+
+**"Why use a Stack instead of other data structures?"**
+
+**Key advantages:**
+
+- **LIFO behavior** matches expression evaluation naturally
+- **O(1) push/pop** operations
+- **Minimal memory overhead**
+- **Perfect for nested parentheses**
+
+**Example:**
+
+```
+Expression: (3 + 4) * 2
+Stack trace:
+  [3]
+  [3, 4]
+  [7]       ← popped 3,4; computed 3+4; pushed 7
+  [7, 2]
+  [14]      ← popped 7,2; computed 7*2; pushed 14
+```
+
+---
+
+### SLIDE 6: Live Demo (2-3 minutes)
+
+**"Now let's see it in action."**
+
+**Demo Test Cases:**
+
+1. **Basic Arithmetic**
+    
+    - Type: `2 + 3 * 4`
+    - Press `=`
+    - **Expected**: `14` (not 20 — correct precedence!)
+    - **Say**: "Notice multiplication happens before addition"
+2. **Parentheses Override**
+    
+    - Type: `(2 + 3) * 4`
+    - Press `=`
+    - **Expected**: `20`
+    - **Say**: "Parentheses override precedence"
+3. **Implicit Multiplication**
+    
+    - Type: `2π`
+    - Press `=`
+    - **Expected**: `6.283...`
+    - **Say**: "Tokenizer inserted implicit multiplication automatically"
+4. **Scientific Functions**
+    
+    - Click `DEG/RAD` to ensure DEG mode
+    - Type: `sin(30)`
+    - Press `=`
+    - **Expected**: `0.5`
+    - **Say**: "All trig functions use java.lang.Math"
+5. **Complex Expression**
+    
+    - Type: `sqrt(16) + log(100)`
+    - Press `=`
+    - **Expected**: `6` (4 + 2)
+    - **Say**: "Multiple functions in one expression"
+6. **Error Handling**
+    
+    - Type: `1 / 0`
+    - Press `=`
+    - **Expected**: "Math Error"
+    - **Say**: "Never crashes—validates domains before computation"
+7. **History Feature**
+    
+    - **Say**: "Notice all calculations are saved in history"
+    - Double-click a history entry
+    - **Say**: "Double-click to reuse previous expressions"
+    - Click "Clear History"
+    - **Say**: "Button disables when history is empty—defensive programming"
+
+---
+
+### SLIDE 7: Code Quality Highlights (30 seconds)
+
+**"The code follows professional standards:"**
+
+- ✅ **Complete documentation** - Every method explains purpose, parameters, complexity
+- ✅ **Error handling** - Math errors, syntax errors, domain errors
+- ✅ **Immutable data** - Operator and HistoryEntry classes are immutable
+- ✅ **Single responsibility** - Each class has one clear purpose
+- ✅ **No magic numbers** - All constants are named (MAX_HISTORY = 100)
+
+---
+
+### SLIDE 8: Conclusion (30 seconds)
+
+**"In summary:"**
+
+1. **Algorithm**: Shunting Yard is the optimal choice—O(n), deterministic, industry-standard
+2. **Data Structure**: Stack naturally matches LIFO expression evaluation
+3. **Architecture**: Clean separation enables testing and maintenance
+4. **Quality**: Production-ready with comprehensive error handling
+
+**"This isn't just a calculator—it's a demonstration of computer science fundamentals applied correctly."**
+
+**"Questions?"**
+
+---
+
+## Part 2: Detailed File-by-File Flow
+
+---
+
+### Complete Execution Flow (With File Names)
+
+```mermaid
+graph TB
+
+    Start([User Clicks Button]) --> UI[CalculatorFrame.java<br/>handleButtonClick]
+
+    UI --> Append{Append to<br/>Expression?}
+
+    Append -->|Yes| Build[CalculatorFrame.java<br/>currentExpression.append]
+
+    Append -->|Equals| Eval[CalculatorFrame.java<br/>evaluateExpression]
+
+    Build --> Display1[CalculatorFrame.java<br/>updateDisplay]
+
+    Display1 --> End1([UI Shows Expression])
+
+    Eval --> Sanitize[Tokenizer.java<br/>sanitize<br/>Remove commas]
+
+    Sanitize --> Tokenize[Tokenizer.java<br/>tokenize<br/>Break into tokens]
+
+    Tokenize --> Implicit[Tokenizer.java<br/>needsImplicitMultiplication<br/>Insert * where needed]
+
+    Implicit --> Parse[ShuntingYardParser.java<br/>toPostfix<br/>Apply Shunting Yard]
+
+    Parse --> Validate[ShuntingYardParser.java<br/>validateParentheses]
+
+    Validate --> Unary[ShuntingYardParser.java<br/>handleUnaryOperators<br/>Convert - to u-]
+
+    %% Fixed line below: Wrapped in quotes to allow pipe characters
+
+    Unary --> Abs["ShuntingYardParser.java<br/>handleAbsoluteValue<br/>Convert |x| to abs"]
+
+    Abs --> ShuntLoop[ShuntingYardParser.java<br/>Main Loop<br/>Process each token]
+
+    ShuntLoop --> OpStack[(Operator Stack<br/>Deque String)]
+
+    ShuntLoop --> OutQueue[(Output Queue<br/>List String)]
+
+    OutQueue --> EvalStart[RPNEvaluator.java<br/>evaluate<br/>Stack-based evaluation]
+
+    EvalStart --> ValStack[(Value Stack<br/>Deque Double)]
+
+    ValStack --> CheckToken{Token Type?}
+
+    CheckToken -->|Number| PushNum[Push to Stack]
+
+    CheckToken -->|Constant| GetConst[RPNEvaluator.java<br/>getConstantValue<br/>Math.PI or Math.E]
+
+    CheckToken -->|Operator| PopOp[Pop 2 values<br/>RPNEvaluator.java<br/>applyOperator]
+
+    CheckToken -->|Function| PopFunc[Pop 1 value<br/>RPNEvaluator.java<br/>applyFunction]
+
+    GetConst --> PushNum
+
+    PopOp --> MathOp[java.lang.Math<br/>pow, etc.]
+
+    PopFunc --> MathFunc[java.lang.Math<br/>sin, cos, log, etc.]
+
+    MathOp --> PushResult[Push result to Stack]
+
+    MathFunc --> PushResult
+
+    PushNum --> MoreTokens{More Tokens?}
+
+    PushResult --> MoreTokens
+
+    MoreTokens -->|Yes| CheckToken
+
+    MoreTokens -->|No| FinalResult[Pop final value from Stack]
+
+    FinalResult --> Format[CalculatorFrame.java<br/>formatResult<br/>DecimalFormat with commas]
+
+    Format --> AddHistory[CalculatorFrame.java<br/>addToHistory<br/>Create HistoryEntry]
+
+    AddHistory --> HistoryList[(ArrayList HistoryEntry<br/>history buffer)]
+
+    HistoryList --> HistoryUI[(DefaultListModel<br/>historyModel)]
+
+    HistoryUI --> Display2[CalculatorFrame.java<br/>displayField.setText]
+
+    Display2 --> EnableClear[Enable Clear History Button]
+
+    EnableClear --> End2([UI Shows Result])
+
+    style Parse fill:#409eff,stroke:#333,stroke-width:3px,color:#fff
+
+    style EvalStart fill:#409eff,stroke:#333,stroke-width:3px,color:#fff
+
+    style OpStack fill:#67c23a,stroke:#333,stroke-width:2px
+
+    style ValStack fill:#67c23a,stroke:#333,stroke-width:2px
+
+    style HistoryList fill:#e6a23c,stroke:#333,stroke-width:2px
+```
+
+---
+
+### Detailed Step-by-Step File Execution
+
+#### **STEP 1: User Interaction**
+
+**File**: `CalculatorFrame.java`
+
+```
+User clicks button "3"
+  → handleButtonClick("3")
+  → appendToExpression("3")
+  → currentExpression.append("3")
+  → updateDisplay()
+  → displayField.setText("3")
+```
+
+**File**: `CalculatorFrame.java`
+
+```
+User clicks button "+"
+  → handleButtonClick("+")
+  → appendToExpression("+")
+  → currentExpression.append("+")
+  → updateDisplay()
+  → displayField.setText("3+")
+```
+
+---
+
+#### **STEP 2: Evaluation Trigger**
+
+**File**: `CalculatorFrame.java`
+
+```
+User clicks "="
+  → handleButtonClick("=")
+  → evaluateExpression()
+  → expression = "3+4*2"
+```
+
+---
+
+#### **STEP 3: Input Sanitization**
+
+**File**: `Tokenizer.java`
+
+```java
+Tokenizer.sanitize(expression)
+  Input:  "3+4*2"
+  Output: "3+4*2" (no commas to remove)
+```
+
+---
+
+#### **STEP 4: Tokenization**
+
+**File**: `Tokenizer.java`
+
+```java
+Tokenizer.tokenize(expression)
+  Input:  "3+4*2"
+  Process:
+    - Character '3' → NUMBER → add "3"
+    - Character '+' → OPERATOR → add "+"
+    - Character '4' → NUMBER → add "4"
+    - Character '*' → OPERATOR → add "*"
+    - Character '2' → NUMBER → add "2"
+  Output: ["3", "+", "4", "*", "2"]
+```
+
+---
+
+#### **STEP 5: Shunting Yard Parsing**
+
+**File**: `ShuntingYardParser.java`
+
+```java
+ShuntingYardParser.toPostfix(tokens)
+  
+  Initialize:
+    operatorStack = empty
+    output = empty
+  
+  Token "3":
+    → isNumber = true
+    → output.add("3")
+    → output = ["3"]
+  
+  Token "+":
+    → isOperator = true
+    → precedence = 1
+    → operatorStack.push("+")
+    → operatorStack = ["+"]
+  
+  Token "4":
+    → isNumber = true
+    → output.add("4")
+    → output = ["3", "4"]
+  
+  Token "*":
+    → isOperator = true
+    → precedence = 2 (higher than +)
+    → operatorStack.push("*")
+    → operatorStack = ["+", "*"]
+  
+  Token "2":
+    → isNumber = true
+    → output.add("2")
+    → output = ["3", "4", "2"]
+  
+  End of tokens:
+    → Pop "*" from stack → output.add("*")
+    → Pop "+" from stack → output.add("+")
+    → output = ["3", "4", "2", "*", "+"]
+```
+
+**Output (Postfix/RPN)**: `["3", "4", "2", "*", "+"]`
+
+---
+
+#### **STEP 6: Stack-Based Evaluation**
+
+**File**: `RPNEvaluator.java`
+
+```java
+RPNEvaluator.evaluate(postfix)
+  
+  Initialize:
+    valueStack = empty
+  
+  Token "3":
+    → isNumber = true
+    → valueStack.push(3.0)
+    → valueStack = [3.0]
+  
+  Token "4":
+    → isNumber = true
+    → valueStack.push(4.0)
+    → valueStack = [3.0, 4.0]
+  
+  Token "2":
+    → isNumber = true
+    → valueStack.push(2.0)
+    → valueStack = [3.0, 4.0, 2.0]
+  
+  Token "*":
+    → isOperator = true
+    → right = valueStack.pop() → 2.0
+    → left = valueStack.pop() → 4.0
+    → result = applyOperator("*", 4.0, 2.0)
+    → result = 4.0 * 2.0 = 8.0
+    → valueStack.push(8.0)
+    → valueStack = [3.0, 8.0]
+  
+  Token "+":
+    → isOperator = true
+    → right = valueStack.pop() → 8.0
+    → left = valueStack.pop() → 3.0
+    → result = applyOperator("+", 3.0, 8.0)
+    → result = 3.0 + 8.0 = 11.0
+    → valueStack.push(11.0)
+    → valueStack = [11.0]
+  
+  Final result:
+    → valueStack.pop() → 11.0
+```
+
+**Output**: `11.0`
+
+---
+
+#### **STEP 7: Result Formatting**
+
+**File**: `CalculatorFrame.java`
+
+```java
+formatResult(11.0)
+  → DecimalFormat("#,##0.##########")
+  → formatter.format(11.0)
+  → Output: "11"
+```
+
+---
+
+#### **STEP 8: History Management**
+
+**File**: `CalculatorFrame.java`
+
+```java
+addToHistory("3+4*2", "11")
+  → entry = new HistoryEntry("3+4*2", "11")
+  → history.add(0, entry)
+  → historyModel.add(0, "3+4*2 = 11")
+  → clearHistoryButton.setEnabled(true)
+```
+
+**File**: `HistoryEntry.java`
+
+```java
+new HistoryEntry("3+4*2", "11")
+  → this.expression = "3+4*2"
+  → this.result = "11"
+  → toString() → "3+4*2 = 11"
+```
+
+---
+
+#### **STEP 9: Display Update**
+
+**File**: `CalculatorFrame.java`
+
+```java
+displayField.setText("11")
+  → UI updates to show result
+```
+
+---
+
+### File Dependency Map
+
+```
+Main.java
+  └─> CalculatorFrame.java
+       ├─> MathContext.java
+       │    └─> Operator.java
+       ├─> Tokenizer.java
+       │    └─> (uses MathContext indirectly)
+       ├─> ShuntingYardParser.java
+       │    ├─> MathContext.java
+       │    └─> Operator.java
+       ├─> RPNEvaluator.java
+       │    ├─> MathContext.java
+       │    └─> java.lang.Math
+       └─> HistoryEntry.java
+```
+
+---
+
+### Data Structure Usage Timeline
+
+```
+Time → 
+
+[T1] User types expression
+     ↓
+     StringBuilder (currentExpression)
+     
+[T2] Click equals
+     ↓
+     String → Tokenizer
+     
+[T3] Tokenization
+     ↓
+     ArrayList<String> (tokens)
+     
+[T4] Shunting Yard
+     ↓
+     Deque<String> (operator stack)
+     ArrayList<String> (output queue)
+     HashMap<String,Operator> (precedence lookup)
+     
+[T5] Evaluation
+     ↓
+     Deque<Double> (value stack)
+     
+[T6] History storage
+     ↓
+     ArrayList<HistoryEntry> (history buffer)
+     DefaultListModel<String> (UI model)
+     
+[T7] Display
+     ↓
+     JTextField (displayField)
+```
+
+---
+
+## Part 3: Interactive Demo Script for Live Coding
+
+### Opening Statement
+
+**"I'll now trace through one calculation live, showing exactly which files and methods execute."**
+
+---
+
+### Live Trace: `sin(30) + 5`
+
+**"Let me type: sin(30) + 5"**
+
+#### **Console Output (add debug prints for demo):**
+
+```
+[CalculatorFrame.handleButtonClick] Button: sin
+[CalculatorFrame.appendFunction] Added: sin(
+
+[CalculatorFrame.handleButtonClick] Button: 3
+[CalculatorFrame.appendToExpression] Expression: sin(3
+
+[CalculatorFrame.handleButtonClick] Button: 0
+[CalculatorFrame.appendToExpression] Expression: sin(30
+
+[CalculatorFrame.handleButtonClick] Button: )
+[CalculatorFrame.appendToExpression] Expression: sin(30)
+
+[CalculatorFrame.handleButtonClick] Button: +
+[CalculatorFrame.appendToExpression] Expression: sin(30)+
+
+[CalculatorFrame.handleButtonClick] Button: 5
+[CalculatorFrame.appendToExpression] Expression: sin(30)+5
+
+[CalculatorFrame.handleButtonClick] Button: =
+[CalculatorFrame.evaluateExpression] Starting evaluation...
+
+[Tokenizer.sanitize] Input: "sin(30)+5"
+[Tokenizer.sanitize] Output: "sin(30)+5"
+
+[Tokenizer.tokenize] Tokenizing...
+[Tokenizer.tokenize] Token: sin
+[Tokenizer.tokenize] Token: (
+[Tokenizer.tokenize] Token: 30
+[Tokenizer.tokenize] Token: )
+[Tokenizer.tokenize] Token: +
+[Tokenizer.tokenize] Token: 5
+[Tokenizer.tokenize] Tokens: [sin, (, 30, ), +, 5]
+
+[ShuntingYardParser.toPostfix] Parsing to postfix...
+[ShuntingYardParser.toPostfix] Postfix: [30, sin, 5, +]
+
+[RPNEvaluator.evaluate] Evaluating postfix...
+[RPNEvaluator.evaluate] Push: 30.0
+[RPNEvaluator.applyFunction] Function: sin, operand: 30.0
+[RPNEvaluator.applyFunction] DEG mode: converting to radians
+[RPNEvaluator.applyFunction] Math.sin(0.5236) = 0.5
+[RPNEvaluator.evaluate] Push: 0.5
+[RPNEvaluator.evaluate] Push: 5.0
+[RPNEvaluator.applyOperator] Operator: +, left: 0.5, right: 5.0
+[RPNEvaluator.evaluate] Result: 5.5
+
+[CalculatorFrame.formatResult] Formatting: 5.5
+[CalculatorFrame.formatResult] Output: "5.5"
+
+[CalculatorFrame.addToHistory] Adding to history
+[HistoryEntry.<init>] Expression: sin(30)+5, Result: 5.5
+
+[CalculatorFrame] Display updated: 5.5
+```
+
+---
+
+## Part 4: Quick Reference Card
+
+### File Purpose Quick Reference
+
+|File|Primary Purpose|Key Method|Algorithm/DS Used|
+|---|---|---|---|
+|`Main.java`|Entry point|`main()`|None (initialization only)|
+|`Operator.java`|Data model|Constructor|None (POJO)|
+|`HistoryEntry.java`|Data model|`toString()`|None (POJO)|
+|`MathContext.java`|Configuration|`initializeOperators()`|`HashMap<String, Operator>`|
+|`Tokenizer.java`|Input processing|`tokenize()`|Regex + ArrayList|
+|`ShuntingYardParser.java`|**Parsing**|`toPostfix()`|**Shunting Yard + Deque**|
+|`RPNEvaluator.java`|**Evaluation**|`evaluate()`|**Stack-based + Deque**|
+|`CalculatorFrame.java`|UI & coordination|`evaluateExpression()`|Event handling|
+
+---
+
+### Method Call Sequence (Simplified)
+
+```
+1. CalculatorFrame.handleButtonClick()
+2. CalculatorFrame.evaluateExpression()
+3.   └─> Tokenizer.sanitize()
+4.   └─> Tokenizer.tokenize()
+5.   └─> ShuntingYardParser.toPostfix()
+6.        └─> ShuntingYardParser.validateParentheses()
+7.        └─> ShuntingYardParser.handleUnaryOperators()
+8.        └─> [Main Shunting Yard Loop]
+9.   └─> RPNEvaluator.evaluate()
+10.       └─> RPNEvaluator.applyOperator() OR
+11.       └─> RPNEvaluator.applyFunction()
+12.  └─> CalculatorFrame.formatResult()
+13.  └─> CalculatorFrame.addToHistory()
+14.  └─> CalculatorFrame (Update UI)
+```
 ---
 
 ## Performance Characteristics
@@ -368,49 +999,9 @@ Where:
 
 ---
 
-## Conclusion
-
-This scientific calculator represents an **industry-standard implementation** of mathematical expression evaluation:
-
-1. **Academically Correct**: Uses proven algorithms (Shunting Yard) and appropriate data structures (Stack)
-2. **Production Quality**: Comprehensive error handling, input validation, and user feedback
-3. **Maintainable**: Clean architecture with separation of concerns
-4. **Extensible**: New features can be added without modifying core logic
-5. **Efficient**: Linear time complexity with minimal memory overhead
-
-The choice of Shunting Yard algorithm with stack-based evaluation is not arbitrary—it is the **optimal solution** for expression parsing, balancing simplicity, correctness, and performance. This approach has been validated across decades of compiler and interpreter implementations, making it the **correct choice** for any serious calculator or expression evaluator.
-
-**Key Takeaway**: When parsing mathematical expressions, Shunting Yard + Stack is the **canonical solution** that combines theoretical correctness with practical efficiency.
-
----
-
 ## Dependencies
 
 - **Java**: JDK 11 or higher
 - **FlatLaf**: 3.2.5 (Modern Swing look and feel)
 - **Swing**: Built-in Java GUI framework
-
-## Build & Run
-
-```bash
-# Compile
-javac -cp ".:flatlaf-3.2.5.jar" calculator/**/*.java
-
-# Run
-java -cp ".:flatlaf-3.2.5.jar" calculator.Main
-```
-
-## Testing Checklist
-
-- Operator precedence: `2+3*4` = 14 (not 20)
-- Parentheses: `(2+3)*4` = 20
-- Implicit multiplication: `2π` ≈ 6.283
-- Functions: `sin(30)` = 0.5 (DEG mode)
-- Error handling: `1/0` → "Math Error"
-- History: Double-click to reuse expression
-
----
-
-**Author**: Andador & Group 4  
-**License**: Educational Use  
-**Version**: 2.0.0
+- **Windowbuilder**: from Marketplace
