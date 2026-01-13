@@ -51,7 +51,6 @@ public class CalculatorFrame extends JFrame {
      * 3. UI setup
      */
     public CalculatorFrame() {
-    	setBackground(new Color(255, 255, 255));
         // Initialize engine components
         context = new MathContext();
         parser = new ShuntingYardParser(context);
@@ -87,7 +86,6 @@ public class CalculatorFrame extends JFrame {
         
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBackground(new Color(102, 102, 102));
-        mainPanel.setForeground(Color.BLACK);
         mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
         setContentPane(mainPanel);
     }
@@ -170,7 +168,6 @@ public class CalculatorFrame extends JFrame {
                 
                 gbc.gridx = col;
                 gbc.gridy = row;
-                gbc.gridwidth = 1;
                 
                 // Make equals button span 2 columns
                 if (label.equals("=")) {
@@ -190,7 +187,8 @@ public class CalculatorFrame extends JFrame {
      * Operators and equals button receive accent colors.
      */
     private JButton createButton(String label) {
-        JButton button = new JButton(label);
+    	JButton button = new JButton(label);
+        button.setForeground(Color.WHITE); //  font color
         button.setFont(new Font("Dialog", Font.BOLD, 14));
         button.setPreferredSize(new Dimension(70, 50));
         button.setFocusPainted(false);
